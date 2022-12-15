@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  db:
+    container_name: postgres_student
+    image: postgres:latest
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: SCHOOL-DB
+      POSTGRES_USER: db-user
+      POSTGRES_PASSWORD: password1
+    volumes:
+      - ./db-data/:/var/lib/postgresql/cars/data
