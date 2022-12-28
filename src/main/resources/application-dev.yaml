@@ -1,0 +1,12 @@
+server:
+  port: 18080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/SCHOOL-DB
+    username: db-user
+    password: password1
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
