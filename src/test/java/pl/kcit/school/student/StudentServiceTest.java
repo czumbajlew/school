@@ -2,14 +2,13 @@ package pl.kcit.school.student;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.testcontainers.shaded.org.hamcrest.Matchers;
 import pl.kcit.school.internal.Gender;
-import pl.kcit.school.internal.exception.ErrorType;
-import pl.kcit.school.internal.exception.InternalBusinessException;
+import pl.kcit.school.internal.exception.DatabaseException;
+import pl.kcit.school.internal.exception.NotFoundException;
 import pl.kcit.school.suite.AppUnitTest;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -28,8 +27,9 @@ class StudentServiceTest {
 
     @Test
     void shouldAddStudent() {
+        UUID id = UUID.randomUUID();
         StudentDto givenStudent = StudentStub.notAddedMaleStudentDto();
-        Student addedStudent = StudentStub.addedMaleStudent();
+        Student addedStudent = StudentStub.addedMaleStudent(id);
         ArgumentCaptor<Student> convertedStudent = ArgumentCaptor.forClass(Student.class);
 
         doReturn(addedStudent)
@@ -44,10 +44,10 @@ class StudentServiceTest {
         assertThat(convertedStudent.getValue().getGender()).isEqualTo(Gender.MALE);
 
         assertThat(student).isNotNull();
-        assertThat(student.id()).isEqualTo(1L);
+        assertThat(student.id()).isEqualTo(id);
         assertThat(student.firstName()).isEqualTo(StudentStub.MALE_STUDENT_FIRSTNAME);
         assertThat(student.lastName()).isEqualTo(StudentStub.MALE_STUDENT_LASTNAME);
-        assertThat(student.dateOfBirth()).isEqualTo(StudentStub.MALE_STUDENT_DATE_OF_BIRTH);
+        assertThat(student.dateOfBirth()).isEqualTo(StudentStub.MALE_STUDENT_DATE_OF_BIRTH.toString());
         assertThat(student.gender()).isEqualTo(Gender.MALE);
     }
 
@@ -57,20 +57,19 @@ class StudentServiceTest {
         ArgumentCaptor<Student> convertedStudent = ArgumentCaptor.forClass(Student.class);
 
         when(studentRepository.save(convertedStudent.capture()))
-                .thenThrow(new RuntimeException("Fail to safe to database"));
+                .thenThrow(new RuntimeException("Fail to save to database"));
 
         Throwable throwable = catchThrowable(() -> studentService.addStudent(givenStudent));
 
-        assertThat(throwable).isInstanceOf(InternalBusinessException.class);
-        InternalBusinessException exception = (InternalBusinessException) throwable;
-        assertThat(exception.getType()).isEqualTo(ErrorType.DATABASE);
-        assertThat(exception.getMessage()).isEqualTo("Fail to safe to database");
+        assertThat(throwable).isInstanceOf(DatabaseException.class);
+        DatabaseException exception = (DatabaseException) throwable;
+        assertThat(exception.getMessage()).isEqualTo("Fail to save to database");
     }
 
     @Test
     void shouldGetStudent() {
-        Optional<Student> givenStudent = Optional.of(StudentStub.addedMaleStudent());
-        long id = 1L;
+        UUID id = UUID.randomUUID();
+        Optional<Student> givenStudent = Optional.of(StudentStub.addedMaleStudent(id));
 
         doReturn(givenStudent)
                 .when(studentRepository).findById(id);
@@ -80,28 +79,27 @@ class StudentServiceTest {
         assertThat(student.firstName()).isEqualTo(StudentStub.MALE_STUDENT_FIRSTNAME);
         assertThat(student.lastName()).isEqualTo(StudentStub.MALE_STUDENT_LASTNAME);
         assertThat(student.gender()).isEqualTo(Gender.MALE);
-        assertThat(student.dateOfBirth()).isEqualTo(StudentStub.MALE_STUDENT_DATE_OF_BIRTH);
+        assertThat(student.dateOfBirth()).isEqualTo(StudentStub.MALE_STUDENT_DATE_OF_BIRTH.toString());
     }
 
     @Test
     void shouldThrowErrorForNotFoundedStudent() {
-        long id = 1L;
+        UUID id = UUID.randomUUID();
 
         doReturn(Optional.empty())
                 .when(studentRepository).findById(id);
 
         Throwable throwable = catchThrowable(() -> studentService.getStudent(id));
 
-        assertThat(throwable).isInstanceOf(InternalBusinessException.class);
-        InternalBusinessException exception = (InternalBusinessException) throwable;
-        assertThat(exception.getType()).isEqualTo(ErrorType.NOT_FOUND);
+        assertThat(throwable).isInstanceOf(NotFoundException.class);
+        NotFoundException exception = (NotFoundException) throwable;
         assertThat(exception.getMessage()).isEqualTo("Student for given id was not found");
     }
 
     @Test
     void shouldDeleteStudent() {
-        Optional<Student> student = Optional.of(StudentStub.addedFemaleStudent());
-        long id = 1L;
+        UUID id = UUID.randomUUID();
+        Optional<Student> student = Optional.of(StudentStub.addedFemaleStudent(id));
 
         doReturn(student)
                 .when(studentRepository).findById(id);
@@ -112,25 +110,24 @@ class StudentServiceTest {
 
     @Test
     void shouldFailToDeleteStudent() {
-        long id = 1L;
+        UUID id = UUID.randomUUID();
 
         doReturn(Optional.empty())
                 .when(studentRepository).findById(id);
 
         Throwable throwable = catchThrowable(() -> studentService.deleteStudent(id));
 
-        assertThat(throwable).isInstanceOf(InternalBusinessException.class);
-        InternalBusinessException exception = (InternalBusinessException) throwable;
-        assertThat(exception.getType()).isEqualTo(ErrorType.NOT_FOUND);
+        assertThat(throwable).isInstanceOf(NotFoundException.class);
+        NotFoundException exception = (NotFoundException) throwable;
         assertThat(exception.getMessage()).isEqualTo("Student is not present. Cannot be deleted");
     }
 
     @Test
     void shouldUpdateStudent() {
         String newLastName = "NewLastName";
-        long id = 2L;
-        Optional<Student> existingStudent = Optional.of(StudentStub.addedFemaleStudent());
-        Student updatedStudent = StudentStub.addedFemaleStudent();
+        UUID id = UUID.randomUUID();
+        Optional<Student> existingStudent = Optional.of(StudentStub.addedFemaleStudent(id));
+        Student updatedStudent = StudentStub.addedFemaleStudent(id);
         updatedStudent.setLastName(newLastName);
         StudentDto requestStudent = new StudentDto(
                 id,
@@ -154,16 +151,15 @@ class StudentServiceTest {
 
     @Test
     void shouldFailToUpdateNotFoundedStudent() {
-        long id = 2L;
+        UUID id = UUID.randomUUID();
 
         doReturn(Optional.empty())
                 .when(studentRepository).findById(id);
 
-        Throwable throwable = catchThrowable(() -> studentService.updateStudent(id, StudentStub.addedMaleStudentDto()));
+        Throwable throwable = catchThrowable(() -> studentService.updateStudent(id, StudentStub.addedMaleStudentDto(id)));
 
-        assertThat(throwable).isInstanceOf(InternalBusinessException.class);
-        InternalBusinessException exception = (InternalBusinessException) throwable;
-        assertThat(exception.getType()).isEqualTo(ErrorType.NOT_FOUND);
+        assertThat(throwable).isInstanceOf(NotFoundException.class);
+        NotFoundException exception = (NotFoundException) throwable;
         assertThat(exception.getMessage()).isEqualTo("Student for given id was not found");
     }
 

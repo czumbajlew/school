@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping(
         value = "/student",
@@ -18,10 +20,10 @@ class StudentController {
         this.studentService = studentService;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    StudentDto getStudent(@PathVariable("id") long id) {
+    StudentDto getStudent(@RequestParam("id") UUID id) {
         return studentService.getStudent(id);
     }
 
@@ -31,15 +33,15 @@ class StudentController {
         return studentService.addStudent(studentDto);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping
     @ResponseStatus(HttpStatus.OK)
-    StudentDto updateStudent(@PathVariable("id") long id, @RequestBody StudentDto studentDto) {
+    StudentDto updateStudent(@RequestParam("id") UUID id, @RequestBody StudentDto studentDto) {
         return studentService.updateStudent(id, studentDto);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    void deleteStudent(@PathVariable("id") long id) {
+    void deleteStudent(@RequestParam("id") UUID id) {
         studentService.deleteStudent(id);
     }
 

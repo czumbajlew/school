@@ -1,16 +1,20 @@
 package pl.kcit.school.student;
 
 import org.springframework.stereotype.Service;
-import pl.kcit.school.internal.exception.ErrorType;
-import pl.kcit.school.internal.exception.InternalBusinessException;
+import pl.kcit.school.internal.exception.DatabaseException;
+import pl.kcit.school.internal.exception.NotFoundException;
 
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 @Service
 public class StudentService {
 
     private final StudentRepository studentRepository;
     private final StudentConverter studentConverter;
+
+    private final Supplier<NotFoundException> studentNotFoundException = () -> new NotFoundException("Student for given id was not found");
 
     public StudentService(
             StudentRepository studentRepository,
@@ -20,14 +24,10 @@ public class StudentService {
         this.studentConverter = studentConverter;
     }
 
-    public StudentDto getStudent(long id) {
+    public StudentDto getStudent(UUID id) {
         return studentRepository.findById(id)
                 .map(studentConverter::convertFrom)
-                .orElseThrow(() -> InternalBusinessException
-                        .builder()
-                        .type(ErrorType.NOT_FOUND)
-                        .message("Student for given id was not found")
-                        .build());
+                .orElseThrow(studentNotFoundException);
     }
 
     public StudentDto addStudent(StudentDto studentDto) {
@@ -35,55 +35,34 @@ public class StudentService {
             Student addedStudent = studentRepository.save(studentConverter.convertTo(studentDto));
             return studentConverter.convertFrom(addedStudent);
         } catch (Exception e) {
-            throw InternalBusinessException
-                    .builder()
-                    .type(ErrorType.DATABASE)
-                    .message(e.getMessage())
-                    .build();
+            throw new DatabaseException(e.getMessage());
         }
     }
 
-    public StudentDto updateStudent(long id, StudentDto studentDto) {
+    public StudentDto updateStudent(UUID id, StudentDto studentDto) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> InternalBusinessException
-                        .builder()
-                        .type(ErrorType.NOT_FOUND)
-                        .message("Student for given id was not found")
-                        .build()
-                );
+                .orElseThrow(studentNotFoundException);
 
         try {
             Student savedStudent = studentRepository.save(updatedStudent(student, studentDto));
 
             return studentConverter.convertFrom(savedStudent);
         } catch (Exception e) {
-            throw InternalBusinessException
-                    .builder()
-                    .type(ErrorType.DATABASE)
-                    .message(e.getMessage())
-                    .build();
+            throw new DatabaseException(e.getMessage());
         }
     }
 
-    public void deleteStudent(long id) {
+    public void deleteStudent(UUID id) {
         Optional<Student> optionalStudent = studentRepository.findById(id);
 
         if (optionalStudent.isEmpty()) {
-            throw InternalBusinessException
-                    .builder()
-                    .type(ErrorType.NOT_FOUND)
-                    .message("Student is not present. Cannot be deleted")
-                    .build();
+            throw new NotFoundException("Student is not present. Cannot be deleted");
         }
 
         try {
             studentRepository.delete(optionalStudent.get());
         } catch (Exception e) {
-            throw InternalBusinessException
-                    .builder()
-                    .type(ErrorType.DATABASE)
-                    .message(e.getMessage())
-                    .build();
+            throw new DatabaseException(e.getMessage());
         }
     }
 

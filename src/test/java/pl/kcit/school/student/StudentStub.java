@@ -3,6 +3,7 @@ package pl.kcit.school.student;
 import pl.kcit.school.internal.Gender;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public class StudentStub {
 
@@ -53,9 +54,9 @@ public class StudentStub {
         );
     }
 
-    public static Student addedMaleStudent() {
+    public static Student addedMaleStudent(UUID id) {
         return new Student(
-                1L,
+                id,
                 MALE_STUDENT_FIRSTNAME,
                 MALE_STUDENT_LASTNAME,
                 MALE_STUDENT_DATE_OF_BIRTH,
@@ -63,9 +64,9 @@ public class StudentStub {
         );
     }
 
-    public static StudentDto addedMaleStudentDto() {
+    public static StudentDto addedMaleStudentDto(UUID id) {
         return new StudentDto(
-                1L,
+                id,
                 MALE_STUDENT_FIRSTNAME,
                 MALE_STUDENT_LASTNAME,
                 MALE_STUDENT_DATE_OF_BIRTH,
@@ -73,9 +74,9 @@ public class StudentStub {
         );
     }
 
-    public static Student addedFemaleStudent() {
+    public static Student addedFemaleStudent(UUID id) {
         return new Student(
-                2L,
+                id,
                 FEMALE_STUDENT_FIRSTNAME,
                 FEMALE_STUDENT_LASTNAME,
                 FEMALE_STUDENT_DATE_OF_BIRTH,
@@ -83,9 +84,9 @@ public class StudentStub {
         );
     }
 
-    public static StudentDto addedFemaleStudentDto() {
+    public static StudentDto addedFemaleStudentDto(UUID id) {
         return new StudentDto(
-                2L,
+                id,
                 FEMALE_STUDENT_FIRSTNAME,
                 FEMALE_STUDENT_LASTNAME,
                 FEMALE_STUDENT_DATE_OF_BIRTH,

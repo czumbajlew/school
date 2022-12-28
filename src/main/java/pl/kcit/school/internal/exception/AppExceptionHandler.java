@@ -14,16 +14,31 @@ import java.time.OffsetDateTime;
 @Slf4j
 public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(InternalBusinessException.class)
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public ExceptionResponse handleNotFoundException(NotFoundException exception) {
+        return ExceptionResponse.builder()
+                .type(ErrorType.NOT_FOUND.name())
+                .message(exception.getMessage())
+                .dateTime(OffsetDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(DatabaseException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    public ExceptionResponse handleIBE(InternalBusinessException exception) {
-        return ExceptionResponse
-                .builder()
-                .type(exception.getType().name())
+    public ExceptionResponse handleDatabaseException(DatabaseException exception) {
+        return ExceptionResponse.builder()
+                .type(ErrorType.DATABASE.name())
                 .message(exception.getMessage())
-                .dateTime(OffsetDateTime.now().toString())
+                .dateTime(OffsetDateTime.now())
                 .build();
+    }
+
+    enum ErrorType {
+        NOT_FOUND,
+        DATABASE
     }
 
 }
